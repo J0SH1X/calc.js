@@ -4,24 +4,116 @@ $(document).ready(function() {
   }
 
   var browser_id = localStorage.getItem('browser_id') || (localStorage.setItem('browser_id', generateId()), localStorage.getItem('browser_id'));
+  let historyIndex = -1;
+  let historyLength = 0;
+
+  function updateHistoryLength() {
+      $.post('backend.php', { browser_id, action: 'getHistoryLength' }, function(response) {
+          if (response) {
+              try {
+                  historyLength = parseInt(response);
+              } catch (error) {
+                  console.error("Error getting history length:", error);
+              }
+          }
+      });
+  }
+
+  function loadHistory(index) {
+      $.post('backend.php', { browser_id, action: 'loadHistory', offset: index }, function(response) {
+          if (response) {
+              try {
+                  const history = JSON.parse(response);
+                  if (history && history.expression) {
+                      $('#display').val(history.expression);
+                      historyIndex = index;
+                  } else {
+                      $('#display').val("");
+                  }
+              } catch (error) {
+                  console.error("Error parsing history:", error);
+                  $('#display').val("Error loading history");
+              }
+          }
+      });
+  }
+
+  updateHistoryLength();
 
   $('.keys button').click(function() {
-      var btn = $(this).text()
+      var btn = $(this).text();
       var display = $('#display');
       if (!display.length) return;
 
       if (btn === '=') {
           try {
               var exp = display.val().trim();
-              if (!/^[\d+\-*/(). ]+$/.test(exp)) return display.val('Error'); //ensure no sql injection can be performned by sanitazing the input
+              if (!/^[\d+\-*/(). ]+$/.test(exp)) return display.val('Error');s
               var res = eval(exp);
               display.val(res);
-              $.post('backend.php', { browser_id, expression: exp, result: res });
+          
+              $.post('backend.php', { browser_id, expression: exp, result: res, action: 'save' }, function() {
+              
+                  updateHistoryLength();
+              
+                  historyIndex = -1;
+              });
           } catch {
               display.val('Error');
           }
+      } else if (btn === 'C') {
+          display.val('');
+      } else if (btn === '←') {
+          var currentText = display.val();
+          display.val(currentText.slice(0, -1));
       } else {
           display.val(display.val() + btn);
       }
   });
+
+  $('#history-up').click(function() {
+    if (historyIndex + 1 < historyLength) {
+        loadHistory(historyIndex + 1);
+        historyIndex++;
+    }
+});
+
+$('#history-down').click(function() {
+    if (historyIndex > -1) {
+        loadHistory(historyIndex - 1);
+        historyIndex--;
+    } else {
+        $('#display').val("");
+    }
+});
+
+$(document).keydown(function(e) {
+    var display = $('#display');
+    if (!display.length) return;
+
+    if (e.key === 'ArrowUp') {
+        if (historyIndex + 1 < historyLength) {
+            loadHistory(historyIndex + 1);
+            historyIndex++;
+        }
+    }
+
+    if (e.key === 'ArrowDown') {
+        if (historyIndex > -1) {
+            loadHistory(historyIndex - 1);
+            historyIndex--;
+        } else {
+            display.val("");
+        }
+    }
+
+    if (e.key === 'Backspace') {
+        var currentText = display.val();
+        display.val(currentText.slice(0, -1));
+    }
+
+    if (e.key === 'Escape') {
+        display.val('');
+    }
+});
 });
