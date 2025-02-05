@@ -44,7 +44,25 @@
     font-size: 16px;
 }
 
-#backspace, #clear {
+#clear {
     background-color: #f9c2c2;
     color: #fff;
 }
+
+#backspace {
+    background-color: #f9c2c2;
+    color: #fff;
+    position: relative;
+}
+
+
+#backspace::after {
+    content: "\232B";
+    font-size: 18px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+}
+
