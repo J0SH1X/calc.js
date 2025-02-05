@@ -75,6 +75,10 @@ $(document).ready(function() {
       } else if (btn === 'C') {
           display.val('');
       } else if (btn === '') {
+        if (display.val() == 'Error' || display.val() == 'Infinity' || display.val() == "NaN"){
+            display.val('');
+            return;
+        }
           var currentText = display.val();
           display.val(currentText.slice(0, -1));
       } else {
@@ -119,6 +123,10 @@ $(document).ready(function() {
       }
 
       if (e.key === 'Backspace') {
+        if (display.val() == 'Error' || display.val() == 'Infinity' || display.val() == "NaN"){
+            display.val('');
+            return;
+        }
           var currentText = display.val();
           display.val(currentText.slice(0, -1));
       }
